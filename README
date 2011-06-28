@@ -12,10 +12,10 @@ Run
 ===
 
 Unix like OS's
-
+--------------
 $ ./main.py
 
 Other
-=====
+-----
 
 Not tested, but double click should work.
