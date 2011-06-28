@@ -1,0 +1,21 @@
+Stopwatch is a pygame based stopwatch I've made to help my brother's gym improvement.
+
+You can get the code at https://github.com/alej0varas/stopwatch
+or visit http://stopwatch.alej0.tk
+
+Requirements
+============
+
+pygame 1.9, visit http://www.pygame.org/install.html
+
+Run
+===
+
+Unix like OS's
+
+$ ./main.py
+
+Other
+=====
+
+Not tested, but double click should work.
