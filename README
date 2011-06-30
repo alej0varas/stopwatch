@@ -19,3 +19,18 @@ Other
 -----
 
 Not tested, but double click should work.
+
+Use
+===
+
++-------+------------+
+|  Key  |   Action   |
++-------+------------+
+| Space | Start/Stop |
++-------+------------+
+|   r   |   Reset    |
++-------+------------+
+|  Esc  |    Exit    |
++-------+------------+
+
+That's all for now ;)
