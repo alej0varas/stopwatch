@@ -28,8 +28,9 @@ from pygame.locals import *
 
 def main():
     font_path = "data/talldark.ttf"
-    video_flags = FULLSCREEN # DOUBLEBUF
-
+    fullscreen = True
+    video_flags = fullscreen and FULLSCREEN
+    print video_flags
     pygame.init()
 
     # get the highest resolution
@@ -37,6 +38,7 @@ def main():
 
     # create our main window SDL surface
     surface = pygame.display.set_mode(resolution, video_flags)
+    pygame.display.set_caption("Stopwatch -- stopwatch.alej0.tk")
 
     # get highest font size that fits resolution width
     font_size = int(resolution[1] / 1.2)
@@ -79,6 +81,12 @@ def main():
                 # initialize the tick count
                 a = 0
                 on = False
+
+            elif event.key == K_f:
+                # swap video mode widowed, fullscreen
+                fullscreen = not fullscreen
+                video_flags = (fullscreen and FULLSCREEN) | (not fullscreen and RESIZABLE)
+                pygame.display.set_mode(resolution, video_flags)
 
         if on:
             # get the amount of ticks(milliseconds) that passed from the start
