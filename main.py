@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 # stopwatch is a pygame based stopwatch
 # Copyright (C) 2011 Alejandro Varas
 # based on code taken from http://www.bonf.net/2007/05/18/so/
@@ -30,7 +30,7 @@ def main():
     font_path = "data/talldark.ttf"
     fullscreen = True
     video_flags = fullscreen and FULLSCREEN
-    print video_flags
+    print(video_flags)
     pygame.init()
 
     # get the highest resolution
@@ -93,7 +93,7 @@ def main():
             a = (pygame.time.get_ticks() - start_tick)
 
         # render the time, by converting ticks to datetime.time + hundredth of a second
-        t = time((a / 1000) / 3600, ((a / 1000) / 60 % 60), (a / 1000) % 60)
+        t = time((a // 1000) // 3600, ((a // 1000) // 60 % 60), (a // 1000) % 60)
         h_o_s = str(a)[-3:][:2] # hundredth of a second
         t_string = ','.join((t.strftime("%H:%M:%S"), h_o_s))
         tempsurface = font.render(t_string, 1, THECOLORS["black"])

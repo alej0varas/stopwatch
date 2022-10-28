@@ -1,27 +1,19 @@
-Stopwatch is a pygame based stopwatch I've made to help my brother's gym improvement.
+Stopwatch is a pygame based stopwatch.
 
 You can get the code at https://github.com/alej0varas/stopwatch
-or visit http://stopwatch.alej0.tk
 
-Requirements
-============
+Install
+=======
 
-pygame 1.9, visit http://www.pygame.org/install.html
+pip intall -r requirements.txt
 
 Run
 ===
 
-Unix like OS's
---------------
-$ ./main.py
+./main.py
 
-Other
------
-
-Not tested, but double click should work.
-
-Use
-===
+Usage
+=====
 
 +-------+--------------------------------------+
 |  Key  |                Action                |
@@ -30,7 +22,7 @@ Use
 +-------+--------------------------------------+
 |   r   |                Reset                 |
 +-------+--------------------------------------+
-|   t   | Swap between fullscreen and windowed |
+|   f   | Swap between fullscreen and windowed |
 +-------+--------------------------------------+
 |  Esc  |                 Exit                 |
 +-------+--------------------------------------+
