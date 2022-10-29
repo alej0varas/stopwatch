@@ -30,13 +30,29 @@ FONT_PATH = "data/mono.ttf"
 
 
 def main():
-    pygame.init()
+    surface = get_surface()
     resolution = pygame.display.get_desktop_sizes()[0]
 
-    # create our main window SDL surface
-    surface = pygame.display.set_mode(flags=FULLSCREEN)
-    pygame.display.set_caption("Stopwatch")
+    font, font_rect, font_blit_point = get_font_artifacts(resolution)
 
+    running = False  # wheter the stopwatch is running or not
+    start = 0  # milliseconds from start
+    start_tick = 0  # the number of ticks when we began counting
+
+    while True:
+        try:
+            running, start, start_tick = get_status(running, start, start_tick)
+        except EndLoopInterrupt:
+            break
+
+        render_time(start, font, surface, font_blit_point)
+
+        # update display
+        pygame.display.flip()
+        pygame.time.wait(100)
+
+
+def get_font_artifacts(resolution):
     # get highest font size that fits resolution width
     font_size = int(resolution[1] * 0.9)
     font_size_fits = False
@@ -53,50 +69,68 @@ def main():
     # get the point to draw the font in the midle of the screen
     font_blit_point = (resolution[0] / 2) - (font_rect[0] / 2), font_rect[1] / 3
 
-    on = False  # wheter the stopwatch is running or not
-    a = 0  # milliseconds from start
-    start_tick = 0  # the number of ticks when we began counting
+    return font, font_rect, font_blit_point
 
-    while True:
-        event = pygame.event.poll()
 
-        if event.type == KEYUP:
-            if event.key == K_ESCAPE:
-                break
+def get_status(running, start, start_tick):
+    event = pygame.event.poll()
 
-            if event.key == K_SPACE:
-                if not on:
-                    # starting the timer, so set the tick count reference to the current tick count
-                    # plus the last tick count
-                    start_tick = pygame.time.get_ticks() - a
+    if event.type == KEYUP:
+        if event.key == K_ESCAPE:
+            raise EndLoopInterrupt
 
-                # swap value
-                on = not on
+        if event.key == K_SPACE:
+            if not running:
+                # starting the timer, so set the tick count reference to the current tick count
+                # plus the last tick count
+                start_tick = pygame.time.get_ticks() - start
 
-            elif event.key == K_r:
-                # initialize the tick count
-                a = 0
-                on = False
+            # swap value
+            running = not running
 
-        if on:
-            # get the amount of ticks(milliseconds) that passed from the start
-            a = pygame.time.get_ticks() - start_tick
+        elif event.key == K_r:
+            # initialize the tick count
+            start = 0
+            running = False
 
-        # render the time, by converting ticks to datetime.time + hundredth of a second
-        t = time((a // 1000) // 3600, ((a // 1000) // 60 % 60), (a // 1000) % 60)
-        h_o_s = int(str(a)[-2:])  # hundredth of a second
-        t_string = "{},{:02d}".format(t.strftime("%H:%M:%S"), h_o_s)
+    if running:
+        # get the amount of ticks(milliseconds) that passed from the start
+        start = pygame.time.get_ticks() - start_tick
 
-        tempsurface = font.render(t_string, 1, THECOLORS["black"])
-        size = tempsurface.get_width(), int(tempsurface.get_height() * 4.5)
-        tempsurface = pygame.transform.scale(tempsurface, size)
+    return running, start, start_tick
 
-        # fill the screen with white, to erase the previous time
-        surface.fill(THECOLORS["white"])
-        surface.blit(tempsurface, font_blit_point)  # draw the time
 
-        pygame.display.flip()
-        pygame.time.wait(100)
+def get_surface():
+    pygame.init()
+
+    # create our main window SDL surface
+    surface = pygame.display.set_mode(flags=FULLSCREEN)
+    pygame.display.set_caption("Stopwatch")
+
+    return surface
+
+
+def get_time_surface(time_string, font):
+    surface = font.render(time_string, 1, THECOLORS["black"])
+    size = surface.get_width(), int(surface.get_height() * 4.5)
+    surface = pygame.transform.scale(surface, size)
+    return surface
+
+
+def render_time(start, font, surface, font_blit_point):
+    # render the time, by converting ticks to datetime.time + hundredth of a second
+    hundredth_of_a_second = int(str(start)[-2:])  # hundredth of a second
+    time_in_ms = time((start // 1000) // 3600, ((start // 1000) // 60 % 60), (start // 1000) % 60)
+    time_string = "{},{:02d}".format(time_in_ms.strftime("%H:%M:%S"), hundredth_of_a_second)
+
+    time_surface = get_time_surface(time_string, font)
+    # fill the screen with white, to erase the previous time
+    surface.fill(THECOLORS["white"])
+    surface.blit(time_surface, font_blit_point)  # draw the time
+
+
+class EndLoopInterrupt(BaseException):
+    pass
 
 
 if __name__ == "__main__":
