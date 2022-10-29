@@ -25,7 +25,11 @@ from pygame.colordict import THECOLORS
 from pygame.locals import FULLSCREEN, KEYUP, K_r, K_ESCAPE, K_SPACE
 
 
-THE_STRING = "00:00:00,00"
+BACKGROUND_COLOR = THECOLORS["black"]
+TEXT_COLOR = THECOLORS["white"]
+
+SEPARATOR = ":"
+THE_STRING = "MM" + SEPARATOR + "SS" + SEPARATOR + "MS"
 FONT_PATH = "data/mono.ttf"
 
 
@@ -49,7 +53,7 @@ def main():
 
         # update display
         pygame.display.flip()
-        pygame.time.wait(100)
+        pygame.time.wait(33)
 
 
 def get_font_artifacts(resolution):
@@ -111,8 +115,8 @@ def get_surface():
 
 
 def get_time_surface(time_string, font):
-    surface = font.render(time_string, 1, THECOLORS["black"])
-    size = surface.get_width(), int(surface.get_height() * 4.5)
+    surface = font.render(time_string, 1, TEXT_COLOR)
+    size = surface.get_width(), int(surface.get_height() * 3)
     surface = pygame.transform.scale(surface, size)
     return surface
 
@@ -121,11 +125,11 @@ def render_time(start, font, surface, font_blit_point):
     # render the time, by converting ticks to datetime.time + hundredth of a second
     hundredth_of_a_second = int(str(start)[-2:])  # hundredth of a second
     time_in_ms = time((start // 1000) // 3600, ((start // 1000) // 60 % 60), (start // 1000) % 60)
-    time_string = "{},{:02d}".format(time_in_ms.strftime("%H:%M:%S"), hundredth_of_a_second)
+    time_string = "{}{}{:02d}".format(time_in_ms.strftime("%M:%S"), SEPARATOR, hundredth_of_a_second)
 
     time_surface = get_time_surface(time_string, font)
     # fill the screen with white, to erase the previous time
-    surface.fill(THECOLORS["white"])
+    surface.fill(BACKGROUND_COLOR)
     surface.blit(time_surface, font_blit_point)  # draw the time
 
 
