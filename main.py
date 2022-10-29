@@ -25,8 +25,11 @@ from pygame.colordict import THECOLORS
 from pygame.locals import FULLSCREEN, KEYUP, K_r, K_ESCAPE, K_SPACE
 
 
+THE_STRING = "00:00:00,00"
+FONT_PATH = "data/mono.ttf"
+
+
 def main():
-    font_path = "data/talldark.ttf"
     pygame.init()
     resolution = pygame.display.get_desktop_sizes()[0]
 
@@ -35,20 +38,20 @@ def main():
     pygame.display.set_caption("Stopwatch")
 
     # get highest font size that fits resolution width
-    font_size = int(resolution[1] / 1.2)
+    font_size = int(resolution[1] * 0.9)
     font_size_fits = False
-    max_string_length = resolution[0] / 8 * 7
+    max_string_length = resolution[0] * 0.95
 
     while not font_size_fits:
-        font = pygame.font.Font(font_path, font_size)
-        font_rect = font.size("00:00:00,00")
+        font = pygame.font.Font(FONT_PATH, font_size)
+        font_rect = font.size(THE_STRING)
         if font_rect[0] > max_string_length:
             font_size = font_size - 10
         else:
             font_size_fits = True
 
     # get the point to draw the font in the midle of the screen
-    font_blit_point = resolution[0] / 16, resolution[1] / 2 - font_rect[1] / 2
+    font_blit_point = (resolution[0] / 2) - (font_rect[0] / 2), font_rect[1] / 3
 
     on = False  # wheter the stopwatch is running or not
     a = 0  # milliseconds from start
@@ -81,13 +84,15 @@ def main():
 
         # render the time, by converting ticks to datetime.time + hundredth of a second
         t = time((a // 1000) // 3600, ((a // 1000) // 60 % 60), (a // 1000) % 60)
-        h_o_s = str(a)[-3:][:2]  # hundredth of a second
-        t_string = ",".join((t.strftime("%H:%M:%S"), h_o_s))
-        tempsurface = font.render(t_string, 1, THECOLORS["black"])
+        h_o_s = int(str(a)[-2:])  # hundredth of a second
+        t_string = "{},{:02d}".format(t.strftime("%H:%M:%S"), h_o_s)
 
-        surface.fill(
-            THECOLORS["white"]
-        )  # fill the screen with white, to erase the previous time
+        tempsurface = font.render(t_string, 1, THECOLORS["black"])
+        size = tempsurface.get_width(), int(tempsurface.get_height() * 4.5)
+        tempsurface = pygame.transform.scale(tempsurface, size)
+
+        # fill the screen with white, to erase the previous time
+        surface.fill(THECOLORS["white"])
         surface.blit(tempsurface, font_blit_point)  # draw the time
 
         pygame.display.flip()
