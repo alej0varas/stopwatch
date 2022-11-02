@@ -25,37 +25,98 @@ from pygame.colordict import THECOLORS
 from pygame.locals import FULLSCREEN, KEYUP, K_c, K_r, K_s, K_ESCAPE, K_SPACE
 
 
-BACKGROUND_COLOR = THECOLORS["black"]
-TEXT_COLOR = THECOLORS["white"]
-
+BACKGROUNDS = {
+    "menu": THECOLORS["black"],
+    "button": THECOLORS["blue"],
+    "stopwatch": THECOLORS["black"],
+}
+TEXT_COLORS = {
+    "menu": THECOLORS["white"],
+    "button": THECOLORS["green"],
+    "stopwatch": THECOLORS["white"],
+}
+TEXT_SIZES = {
+    "button": 50,
+    "stopwatch": 100,
+}
 SEPARATOR = ":"
 THE_STRING = "MM" + SEPARATOR + "SS" + SEPARATOR + "MS"
 FONT_PATH = "data/mono.ttf"
+FONT_SIZES = {
+    "stopwatch": 500,
+    "button": 50,
+}
+
+
+def get_resolution():
+    pygame.init()
+    return pygame.display.get_desktop_sizes()[0]
+
+
+def get_font_artifacts(font_size):
+    # get highest font size that fits resolution width
+    resolution = get_resolution()
+    # font_size = int(resolution[1] * 0.9)
+    font_size_fits = False
+    max_string_length = resolution[0] * 0.95
+
+    while not font_size_fits:
+        font = pygame.font.Font(FONT_PATH, font_size)
+        font_rect = font.size(THE_STRING)
+        if font_rect[0] > max_string_length:
+            font_size = font_size - 10
+        else:
+            font_size_fits = True
+
+    font = {
+        "font": font,
+        "font_rect": font_rect,
+        "font_blit_point": ((resolution[0] / 2) - (font_rect[0] / 2), font_rect[1] / 3),
+    }
+
+    return font
+
+
+FONTS = {
+    "stopwatch": get_font_artifacts(FONT_SIZES["stopwatch"]),
+    "button": get_font_artifacts(FONT_SIZES["button"]),
+}
+
+
+class Button:
+    def __init__(self, text, position, size):
+        self.text = text
+        self.position = position
+        self.size = size
+        self.surface = pygame.Surface(size)
+
+    def render(self):
+        self.surface.fill(BACKGROUNDS["button"])
+        font = FONTS["button"]["font"]
+        text_surface = font.render(self.text, 1, TEXT_COLORS["button"])
+        self.surface.blit(text_surface, (10, 10))
 
 
 class Stopwatch:
-    def __init__(self, application, parent, position, size):
-        self.parent = parent
-        self.application = application
-        self.position = position
-
-        self.surface = pygame.Surface(size)
-
+    def __init__(self, surface_size):
+        self.surface = pygame.Surface(surface_size)
+        self.running = False
         self.start = 0
         self.start_tick = 0
+        self.text = "0"
 
     def run(self):
         self.event_handler()
-        if self.application.running:
-            self.start = pygame.time.get_ticks() - self.start_tick
 
-        self.application.render_time(self.start)
+        if self.running:
+            self.start = pygame.time.get_ticks() - self.start_tick
 
     def event_handler(self):
         event = pygame.event.poll()
+
         if event.type == KEYUP:
             if event.key == K_ESCAPE:
-                self.application.object = self.parent
+                raise EndLoopInterrupt
             elif event.key == K_SPACE:
                 self.handle_space()
             elif event.key == K_r:
@@ -64,87 +125,91 @@ class Stopwatch:
 
     def handle_reset(self):
         self.start = 0
-        self.application.running = False
+        self.running = False
 
     def handle_space(self):
-        if not self.application.running:
+        if not self.running:
             self.start_tick = pygame.time.get_ticks() - self.start
-        self.application.running = not self.application.running
+        self.running = not self.running
+
+    def get_time(self):
+        return self.start
 
     def render(self):
-        self.surface.fill("blue")
-        font = pygame.font.Font(FONT_PATH, 50)
-        text_surface = font.render("Stopwatch", 1, "green")
+        self.surface.fill(BACKGROUNDS["stopwatch"])
+        text_surface = get_text_surface(self.get_time())
         self.surface.blit(text_surface, (10, 10))
-        self.rect = self.application.surface.blit(self.surface, self.position)
 
 
 class Countdown:
-    def __init__(self, application, parent, position, size):
-        self.application = application
-        self.parent = parent
-        self.position = position
-
-        self.surface = pygame.Surface(size)
-
+    def __init__(self, surface_size):
+        self.surface = pygame.Surface(surface_size)
+        self.running = False
         self.ticks_count = 5000
         self.ticks_remaining = self.ticks_count
         self.ticks_stop = 0
+        self.text = str(self.ticks_remaining)
 
     def run(self):
-        try:
-            self.event_handler()
-        except EndLoopInterrupt:
-            return
+        self.event_handler()
 
-        if self.application.running:
+        if self.running:
             _ticks = self.ticks_stop - pygame.time.get_ticks()
             if _ticks <= 0:
                 raise EndLoopInterrupt
             ticks_remaining = abs(_ticks)
         else:
             ticks_remaining = self.ticks_count
-
-        self.application.render_time(ticks_remaining)
+        self.ticks_remaining = ticks_remaining
 
     def event_handler(self):
         event = pygame.event.poll()
         if event.type == KEYUP:
             if event.key == K_ESCAPE:
-                self.application.object = self.parent
                 raise EndLoopInterrupt
             elif event.key == K_SPACE:
                 self.handle_space()
         pygame.event.clear()
 
     def handle_space(self):
-        if not self.application.running:
+        if not self.running:
             self.ticks_stop = pygame.time.get_ticks() + self.ticks_count
-            self.application.running = True
+            self.running = True
+
+    def get_time(self):
+        return self.ticks_remaining
 
     def render(self):
-        self.surface.fill("blue")
-        font = pygame.font.Font(FONT_PATH, 50)
-        text_surface = font.render("Countdown", 1, "green")
+        self.surface.fill(BACKGROUNDS["stopwatch"])
+        text_surface = get_text_surface(self.get_time())
         self.surface.blit(text_surface, (10, 10))
-        self.rect = self.application.surface.blit(self.surface, self.position)
 
 
 class Menu:
     def __init__(self, application):
         self.application = application
-        self.buttons = {}
+        self.surface_size = (
+            self.application.surface.get_width(),
+            self.application.surface.get_height(),
+        )
+        self.surface = pygame.Surface(self.surface_size)
 
+        self.buttons = {}
         size = 400, 100
         position = 10, 10
-        self.buttons["countdown"] = Countdown(self.application, self, position, size)
+
+        self.buttons["countdown"] = {
+            "button": Button("Countdown", position, size),
+            "class": Countdown,
+        }
 
         position = size[0] + (position[0] * 2), 10
-        self.buttons["stopwatch"] = Stopwatch(self.application, self, position, size)
+        self.buttons["stopwatch"] = {
+            "button": Button("Stopwatch", position, size),
+            "class": Stopwatch,
+        }
 
     def run(self):
-        self.render()
-
         self.event_handler()
 
     def event_handler(self):
@@ -154,24 +219,29 @@ class Menu:
                 handle_exit()
 
             elif event.key == K_c:
-                self.application.object = self.buttons["countdown"]
+                self.application.childapp = Countdown(self.surface_size)
 
             elif event.key == K_s:
-                self.application.object = self.buttons["stopwatch"]
+                self.application.childapp = Stopwatch(self.surface_size)
 
         elif event.type == pygame.locals.MOUSEBUTTONUP:
             point = pygame.mouse.get_pos()
+
             for _, _object in self.buttons.items():
-                if _object.rect.collidepoint(point):
-                    self.application.object = _object
+                if _object["button"].rect.collidepoint(point):
+                    self.application.childapp = _object["class"](self.surface_size)
                     break
 
         pygame.event.clear()
 
     def render(self):
-        self.application.surface.fill(BACKGROUND_COLOR)
-        for _, button in self.buttons.items():
-            button.render()
+        self.surface.fill(BACKGROUNDS["menu"])
+        for _, _object in self.buttons.items():
+            _object["button"].render()
+
+            _object["button"].rect = self.surface.blit(
+                _object["button"].surface, _object["button"].position
+            )
 
 
 def handle_exit():
@@ -179,13 +249,39 @@ def handle_exit():
 
 
 def get_surface():
-    pygame.init()
-
     # create our main window SDL surface
     surface = pygame.display.set_mode(flags=FULLSCREEN)
     pygame.display.set_caption("Stopwatch")
 
     return surface
+
+
+def get_time_surface(time_string):
+    surface = FONTS["stopwatch"]["font"].render(
+        time_string, 1, TEXT_COLORS["stopwatch"]
+    )
+    size = surface.get_width(), int(surface.get_height() * 3)
+    surface = pygame.transform.scale(surface, size)
+    return surface
+
+
+def get_time_string(start):
+    hundredth_of_a_second = int(str(start)[-2:])  # hundredth of a second
+    time_in_ms = time(
+        (start // 1000) // 3600, ((start // 1000) // 60 % 60), (start // 1000) % 60
+    )
+    time_string = "{}{}{:02d}".format(
+        time_in_ms.strftime("%M:%S"), SEPARATOR, hundredth_of_a_second
+    )
+    return time_string
+
+
+def get_text_surface(time):
+    # render the time, by converting ticks to datetime.time + hundredth of a second
+    time_string = get_time_string(time)
+    time_surface = get_time_surface(time_string)
+    # fill the screen with white, to erase the previous time
+    return time_surface
 
 
 class EndLoopInterrupt(BaseException):
@@ -195,54 +291,18 @@ class EndLoopInterrupt(BaseException):
 class Application:
     def __init__(self):
         self.surface = get_surface()
-        self.surface.fill(BACKGROUND_COLOR)
-        self.resolution = pygame.display.get_desktop_sizes()[0]
-        self.set_font_artifacts()
-        self.object = Menu(self)
-        self.running = False
+        self.childapp = Menu(self)
 
     def run(self):
-        self.object.run()
+        try:
+            self.render()
+            self.childapp.run()
+        except EndLoopInterrupt:
+            self.childapp = self.childapp.parent
 
-    def get_time_surface(self, time_string):
-        surface = self.font.render(time_string, 1, TEXT_COLOR)
-        size = surface.get_width(), int(surface.get_height() * 3)
-        surface = pygame.transform.scale(surface, size)
-        return surface
-
-    def set_font_artifacts(self):
-        # get highest font size that fits resolution width
-        font_size = int(self.resolution[1] * 0.9)
-        font_size_fits = False
-        max_string_length = self.resolution[0] * 0.95
-
-        while not font_size_fits:
-            font = pygame.font.Font(FONT_PATH, font_size)
-            font_rect = font.size(THE_STRING)
-            if font_rect[0] > max_string_length:
-                font_size = font_size - 10
-            else:
-                font_size_fits = True
-
-        self.font = font
-        self.font_rect = font_rect
-        self.font_blit_point = (self.resolution[0] / 2) - (font_rect[0] / 2), font_rect[
-            1
-        ] / 3
-
-    def render_time(self, start):
-        # render the time, by converting ticks to datetime.time + hundredth of a second
-        hundredth_of_a_second = int(str(start)[-2:])  # hundredth of a second
-        time_in_ms = time(
-            (start // 1000) // 3600, ((start // 1000) // 60 % 60), (start // 1000) % 60
-        )
-        time_string = "{}{}{:02d}".format(
-            time_in_ms.strftime("%M:%S"), SEPARATOR, hundredth_of_a_second
-        )
-        time_surface = self.get_time_surface(time_string)
-        # fill the screen with white, to erase the previous time
-        self.surface.fill(BACKGROUND_COLOR)
-        self.surface.blit(time_surface, self.font_blit_point)  # draw the time
+    def render(self):
+        self.childapp.render()
+        self.surface.blit(self.childapp.surface, (0, 0))
 
 
 def main():
